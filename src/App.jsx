@@ -1,88 +1,69 @@
-import React, { useEffect, useRef, useState } from 'react';
+import { useState, useEffect } from 'react';
 import Header from './components/Header';
 import UploadPanel from './components/UploadPanel';
 import PreviewPlayer from './components/PreviewPlayer';
 import HowItWorks from './components/HowItWorks';
 
-function App() {
-  const [processing, setProcessing] = useState(false);
+function useProcessing() {
+  const [isProcessing, setIsProcessing] = useState(false);
   const [progress, setProgress] = useState(0);
-  const [previewUrl, setPreviewUrl] = useState('');
-  const currentObjectUrl = useRef('');
+  const [resultUrl, setResultUrl] = useState(null);
 
-  useEffect(() => {
-    return () => {
-      if (currentObjectUrl.current) URL.revokeObjectURL(currentObjectUrl.current);
-    };
-  }, []);
-
-  const simulateProcess = (file) => {
-    setProcessing(true);
+  const start = async ({ file, previewUrl, duration, ratio, injectBroll }) => {
+    setIsProcessing(true);
     setProgress(0);
-    const total = 100;
-    let p = 0;
-    const tick = () => {
-      p += Math.floor(Math.random() * 12) + 5;
-      if (p >= total) {
-        p = 100;
-        setProgress(p);
-        setProcessing(false);
-        // Simulasi hasil: tampilkan file asli sebagai preview
-        if (currentObjectUrl.current) URL.revokeObjectURL(currentObjectUrl.current);
-        const url = URL.createObjectURL(file);
-        currentObjectUrl.current = url;
-        setPreviewUrl(url);
-      } else {
-        setProgress(p);
-        setTimeout(tick, 350);
-      }
-    };
-    setTimeout(tick, 400);
+    setResultUrl(null);
+
+    // Simulate staged processing timeline for UX realism
+    const steps = [
+      { label: 'Analyzing audio and scenes', inc: 20 },
+      { label: 'Smart cuts & silence removal', inc: 35 },
+      { label: 'Auto reframe for ratio', inc: 25 },
+      { label: 'Injecting B-roll & captions', inc: 20 },
+    ];
+
+    for (const s of steps) {
+      await new Promise((r) => setTimeout(r, 600));
+      setProgress((p) => Math.min(99, p + s.inc));
+    }
+
+    // In a real app, this would be the processed blob from backend.
+    // For demo, we return the original file as the result URL.
+    const processedBlob = file;
+    const processedUrl = URL.createObjectURL(processedBlob);
+    setResultUrl(processedUrl);
+    setIsProcessing(false);
   };
 
-  const handleSubmit = ({ file }) => {
-    setPreviewUrl('');
-    simulateProcess(file);
-  };
-
-  const handleDownload = () => {
-    if (!previewUrl) return;
+  const download = () => {
+    if (!resultUrl) return;
     const a = document.createElement('a');
-    a.href = previewUrl;
-    a.download = 'auto-edited-video.mp4';
+    a.href = resultUrl;
+    a.download = 'viral-cut.mp4';
     document.body.appendChild(a);
     a.click();
     a.remove();
   };
 
+  useEffect(() => {
+    return () => {
+      if (resultUrl) URL.revokeObjectURL(resultUrl);
+    };
+  }, [resultUrl]);
+
+  return { isProcessing, progress, resultUrl, start, download };
+}
+
+export default function App() {
+  const { isProcessing, progress, resultUrl, start, download } = useProcessing();
+
   return (
-    <div className="min-h-screen bg-[radial-gradient(60%_80%_at_50%_0%,rgba(99,102,241,0.20),rgba(2,6,23,1))] from-slate-900 to-slate-950 text-slate-100">
+    <div className="min-h-screen bg-gradient-to-b from-white to-neutral-50 dark:from-neutral-950 dark:to-neutral-900 text-neutral-900 dark:text-neutral-50">
       <Header />
-
-      <main className="max-w-6xl mx-auto px-4 py-8 md:py-12 grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="space-y-6">
-          <UploadPanel onSubmit={handleSubmit} />
-          <HowItWorks />
-        </div>
-        <div className="space-y-6">
-          <PreviewPlayer processing={processing} progress={progress} previewUrl={previewUrl} onDownload={handleDownload} />
-          <section className="rounded-2xl border border-white/10 bg-white/5 backdrop-blur p-6">
-            <h3 className="text-white font-semibold text-lg">Tips biar makin FYP</h3>
-            <ul className="mt-3 list-disc list-inside text-slate-300 text-sm space-y-1">
-              <li>Gunakan hook 1-2 detik pertama yang kuat.</li>
-              <li>Tambahkan subtitle kontras dan cepat terbaca.</li>
-              <li>Durasi 20-35 detik sering perform paling stabil.</li>
-              <li>Pakai musik trend & beat yang konsisten.</li>
-            </ul>
-          </section>
-        </div>
-      </main>
-
-      <footer className="py-8 text-center text-slate-400 text-sm">
-        Dibuat untuk proses cepat — siap upload ke platform favoritmu.
-      </footer>
+      <UploadPanel onSubmit={start} />
+      <PreviewPlayer isProcessing={isProcessing} progress={progress} videoUrl={resultUrl} onDownload={download} />
+      <HowItWorks />
+      <footer className="mx-auto max-w-6xl px-6 pb-10 text-xs text-muted-foreground">Built for creators who want results fast.</footer>
     </div>
   );
 }
-
-export default App;

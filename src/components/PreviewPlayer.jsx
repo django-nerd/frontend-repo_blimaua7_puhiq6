@@ -1,38 +1,37 @@
-import React from 'react';
-import { Play, Download } from 'lucide-react';
+import { Download, Loader2 } from 'lucide-react';
 
-export default function PreviewPlayer({ processing, progress, previewUrl, onDownload }) {
+export default function PreviewPlayer({ isProcessing, progress, videoUrl, onDownload }) {
   return (
-    <section className="w-full rounded-2xl border border-white/10 bg-gradient-to-br from-slate-900/70 to-slate-950/80 backdrop-blur p-5 md:p-6">
-      <div className="flex items-center justify-between gap-3">
-        <h2 className="text-lg md:text-xl font-semibold text-white">Preview</h2>
-        {previewUrl && (
-          <button onClick={onDownload} className="inline-flex items-center gap-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 transition text-white font-medium py-2 px-3">
-            <Download className="h-4 w-4" /> Unduh Video
-          </button>
-        )}
-      </div>
-
-      <div className="mt-4 aspect-video w-full rounded-xl overflow-hidden border border-white/10 bg-black/60 flex items-center justify-center">
-        {!previewUrl ? (
-          <div className="text-center p-6">
-            {processing ? (
-              <div>
-                <div className="w-64 h-2 bg-slate-800 rounded overflow-hidden">
-                  <div className="h-full bg-indigo-500 animate-[progress_1.2s_ease-in-out_infinite]" style={{ width: `${progress}%` }} />
-                </div>
-                <p className="text-slate-300 mt-3 text-sm">Memproses video... {progress}%</p>
-                <style>{`@keyframes progress { 0%{transform: translateX(-100%);} 50%{transform: translateX(-50%);} 100%{transform: translateX(0%);} }`}</style>
-              </div>
-            ) : (
-              <div className="flex flex-col items-center gap-2 text-slate-400">
-                <Play className="h-6 w-6" />
-                <p className="text-sm">Upload video untuk melihat hasil</p>
-              </div>
-            )}
+    <section className="mx-auto max-w-6xl px-6 pb-10">
+      <div className="rounded-2xl border border-neutral-200 dark:border-neutral-800 p-6 bg-white/60 dark:bg-neutral-900/60 backdrop-blur">
+        {isProcessing ? (
+          <div className="flex flex-col items-center justify-center gap-4 py-10">
+            <Loader2 className="h-7 w-7 animate-spin text-indigo-600" />
+            <p className="font-medium">Processing your viral cut…</p>
+            <div className="w-full h-2 rounded-full bg-neutral-200 dark:bg-neutral-800 overflow-hidden">
+              <div className="h-full bg-indigo-600 transition-all" style={{ width: `${progress}%` }} />
+            </div>
+            <p className="text-xs text-muted-foreground">Auto cutting, reframing, captions, B‑roll injection</p>
+          </div>
+        ) : videoUrl ? (
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+            <div className="lg:col-span-2">
+              <video src={videoUrl} controls className="w-full rounded-xl shadow" />
+            </div>
+            <div className="space-y-3">
+              <button onClick={onDownload} className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-indigo-600 text-white py-3 font-medium shadow hover:bg-indigo-700">
+                <Download className="h-4 w-4" /> Download result
+              </button>
+              <ul className="text-sm text-muted-foreground list-disc ml-5">
+                <li>Hook optimized first 3 seconds</li>
+                <li>Auto zoom & reframe for 9:16</li>
+                <li>Sound levels normalized</li>
+                <li>Captions with emphasis keyframes</li>
+              </ul>
+            </div>
           </div>
         ) : (
-          <video src={previewUrl} controls className="w-full h-full" />
+          <div className="text-center text-sm text-muted-foreground">Upload a video to see the preview here.</div>
         )}
       </div>
     </section>
