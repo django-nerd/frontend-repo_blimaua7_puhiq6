@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect } from 'react';
 import Header from './components/Header';
 import UploadPanel from './components/UploadPanel';
 import PreviewPlayer from './components/PreviewPlayer';
@@ -26,31 +26,42 @@ function useProcessing() {
     }
   };
 
-  const start = async ({ file, duration, ratio, injectBroll }) => {
+  const start = async ({ file }) => {
     setIsProcessing(true);
     setProgress(0);
-    // cleanup previous result
     if (resultUrl) URL.revokeObjectURL(resultUrl);
     setResultUrl(null);
     setResultBlob(null);
 
-    // Simulate staged processing timeline for UX realism
-    const steps = [20, 35, 25, 20];
-    for (const inc of steps) {
-      await new Promise((r) => setTimeout(r, 600));
+    // Fast processing timeline (~1 second total)
+    const increments = [30, 40, 30];
+    for (const inc of increments) {
+      await new Promise((r) => setTimeout(r, 330));
       setProgress((p) => Math.min(99, p + inc));
     }
 
-    // DEMO: return original file as processed output to ensure download works reliably.
-    // Create a new Blob to avoid file handles being locked in some browsers.
+    // For demo: return original file as processed output, ensuring reliable download
     const processed = new Blob([await file.arrayBuffer()], { type: file.type || 'video/mp4' });
     const url = URL.createObjectURL(processed);
     setResultBlob(processed);
     setResultUrl(url);
     const ext = extFromMime(processed.type);
     setResultName(`viral-cut${ext}`);
+
     setIsProcessing(false);
     setProgress(100);
+
+    // Auto-download immediately once ready
+    setTimeout(() => {
+      const a = document.createElement('a');
+      const dlUrl = URL.createObjectURL(processed);
+      a.href = dlUrl;
+      a.download = `viral-cut${ext}` || 'viral-cut';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(dlUrl);
+    }, 50);
   };
 
   const download = () => {
